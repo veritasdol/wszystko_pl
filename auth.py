@@ -4,10 +4,7 @@ import pydantic
 from datetime import datetime, timedelta
 from typing import Optional
 
-
-API_URL = 'https://wszystko.pl/api'
-TOKEN_JSON_FILE = 'tokens.json'  # type path to your tokens file
-
+from . import config
 
 class TokenSchema(pydantic.BaseModel):
     accessToken: str
@@ -32,7 +29,7 @@ def get_device_code() -> str:
 
 def send_request(method: str, path: str, device_code: str = None, refresh_token: str = None) -> dict:
     params = {'deviceCode': device_code, 'refreshToken': refresh_token}
-    url = API_URL + path
+    url = config.API_URL + path
     try:
         response = requests.request(method=method,
                                     url=url,
@@ -59,7 +56,7 @@ def get_token(device_code: str = None, refresh_token: str = None) -> str:
             path='/integration/token',
             device_code=device_code
         )
-    with open(TOKEN_JSON_FILE, 'w') as file:
+    with open(config.TOKEN_JSON_FILE, 'w') as file:
         response['date'] = str(datetime.now())
         file.write(json.dumps(response))
     return response['accessToken']
@@ -74,7 +71,7 @@ def check_file(path_to_file: str) -> bool:
         with open(path_to_file, 'r') as file:
             TokenSchema.model_validate_json(file.read())
             return True
-    except ValueError or pydantic.ValidationError or FileNotFoundError:
+    except (ValueError, pydantic.ValidationError, FileNotFoundError) as err:
         return False
 
 
@@ -92,8 +89,8 @@ def token() -> str:
     '''
     Return token
     '''
-    if check_file(TOKEN_JSON_FILE):
-        with open(TOKEN_JSON_FILE, 'r') as file:
+    if check_file(config.TOKEN_JSON_FILE):
+        with open(config.TOKEN_JSON_FILE, 'r') as file:
             data = json.loads(file.read())
             if check_token(data):
                 return data['accessToken']
