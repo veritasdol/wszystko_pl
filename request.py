@@ -14,3 +14,4 @@ def send_request(method: str, path: str, params: dict = None) -> dict:
         return response.json()
     except requests.exceptions.HTTPError as err:
         raise SystemExit(err)
+    
